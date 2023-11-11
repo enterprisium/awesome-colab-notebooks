@@ -38,7 +38,7 @@ def parse_authors(authors: list[tuple[str, str]], num_of_visible: int) -> str:
     return '<ul>' + ' '.join(f'<li>[{author}]({link})</li>' for author,link in authors[:num_of_visible]) + '<details><summary>others</summary>' + ' '.join(f'<li>[{author}]({link})</li>' for author,link in authors[num_of_visible:]) + '</ul></details>'
 
 def parse_links(list_of_links: list[tuple[str, str]]) -> str:
-    if len(list_of_links) == 0:
+    if not list_of_links:
         return ''
     dct = defaultdict(list)
     for tupl in list_of_links:
@@ -54,10 +54,19 @@ def parse_links(list_of_links: list[tuple[str, str]]) -> str:
             dct.pop('git')
         else:
             dct['git'].pop(0)
-    if len(dct) == 0:
+    if not dct:
         return line
 
-    return line + '<ul>' + ''.join('<li>' + ', '.join(parse_link((name, url)) for url in dct[name]) + '</li>' for name in dct.keys()) + '</ul>'
+    return (
+        f'{line}<ul>'
+        + ''.join(
+            '<li>'
+            + ', '.join(parse_link((name, url)) for url in dct[name])
+            + '</li>'
+            for name in dct
+        )
+        + '</ul>'
+    )
 
 def get_top_authors(topK) -> tuple[str, int]:
     global TOP_K
@@ -111,10 +120,9 @@ def get_top_papers(topK) -> str:
     return '<ul>' + ' '.join(f"<li>{name}\t{doi_url(url)}</li>" for name,url,_ in repos) + '</ul>'
 
 def get_best_of_the_best(authors: str, topK: int) -> str:
-    table = f'''| authors | repositories | papers |
+    return f'''| authors | repositories | papers |
 |---|---|---|
 | {authors} | {get_top_repos(topK)} | {get_top_papers(topK)}'''
-    return table
 
 def generate_table(fn: str, num_visible_authors: int, f):
     data = read_json(fn)
